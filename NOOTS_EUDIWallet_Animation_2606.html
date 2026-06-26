@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EUDI-Wallet · Ausstellung Immatrikulationsbescheinigung – klickbarer Flow</title>
+<script>
+/* ===== Konfiguration – hier zentral anpassen ===== */
+window.CFG = {
+  PORTAL_URL:    "ausstellungsservice.bund.de",  /* Browser-Adresse (einheitlich) */
+  ISSUANCE_URL:  "ausstellungsservice.bund.de",  /* Browser-Adresse (einheitlich) */
+  ISSUER:        "BVA"                 /* Name des Ausstellers (Wallet & Nachweis) */
+};
+</script>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#efede6;color:#1f1f1e;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.5}
+p{margin:0}
+.tic{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;display:inline-block;vertical-align:-2px}
+.wrap{max-width:1190px;margin:0 auto;padding:40px 24px 64px}
+header h1{font-size:22px;font-weight:600;margin:0 0 4px}
+header p{font-size:14px;color:#6f6e68;margin:0 0 28px}
+.disclaimer{background:#f4eee7;border:1px solid #e3dccf;border-left:4px solid #c2746c;border-radius:12px;padding:13px 18px 14px;margin:0 0 26px}
+.disclaimer .dhead{display:flex;align-items:center;gap:9px;font-size:15.5px;font-weight:600;color:#8f4f49;margin:0 0 5px;line-height:1.25}
+.disclaimer .dhead svg{flex-shrink:0}
+.disclaimer p.dbody{font-size:12.5px;color:#6f6e68;line-height:1.5;margin:0;max-width:95ch}
+.stage{display:flex;flex-wrap:wrap;gap:28px;justify-content:center;align-items:flex-start}
+
+.fphone{position:relative;background:linear-gradient(135deg,#3a3a38,#191918 45%,#2c2c2a);border-radius:52px;padding:11px;width:264px;flex-shrink:0;box-shadow:0 1px 0 1px rgba(255,255,255,.06) inset,0 18px 40px -12px rgba(0,0,0,.45),0 4px 10px rgba(0,0,0,.25)}
+.fphone::before,.fphone::after{content:"";position:absolute;width:3px;border-radius:2px 0 0 2px;background:#15110f;left:-3px}
+.fphone::before{top:118px;height:26px;box-shadow:0 44px 0 #15110f,0 92px 0 0 #15110f}
+.fphone::after{top:96px;height:14px}
+.btn-pwr{position:absolute;right:-3px;top:150px;width:3px;height:54px;border-radius:0 2px 2px 0;background:#15110f}
+.fscr{position:relative;background:#fff;border-radius:42px;overflow:hidden;height:548px}
+.island{position:absolute;top:9px;left:50%;transform:translateX(-50%);width:86px;height:24px;background:#000;border-radius:99px;z-index:30;display:flex;align-items:center;justify-content:flex-end;padding-right:9px}
+.island::after{content:"";width:7px;height:7px;border-radius:50%;background:#0b1a26;box-shadow:0 0 0 1px #1a2733}
+.scn{position:absolute;inset:0;display:flex;flex-direction:column;opacity:0;transform:translateX(40px);transition:opacity .6s,transform .6s;pointer-events:none;background:#fff}
+.scn.act{opacity:1;transform:none;pointer-events:auto}
+.scn.m3{background:#F4F7FC;color:#1b1c1e}
+.fsb{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:13px 22px 5px;font-size:11px;font-weight:600}
+.fsb .icr{display:flex;gap:3px;justify-content:end}
+.furl{display:flex;align-items:center;gap:8px;padding:5px 10px;color:#6f6e68}
+.fpill{flex:1;display:flex;align-items:center;gap:5px;background:#f1efe8;border-radius:99px;padding:4px 10px;font-size:11px;color:#444441}
+.flg{display:flex;flex-direction:column;border-radius:2px;overflow:hidden;flex-shrink:0}
+.flg span{flex:1}
+.flg .b{background:#000}.flg .r{background:#E2001A}.flg .g{background:#F5C400}
+.stripes{display:flex;flex-direction:column}
+.stripes span{height:3px}
+.fbd{padding:11px 16px;flex:1;display:flex;flex-direction:column;min-height:0}
+.bp{width:100%;background:#1f1f1e;color:#fff;border:none;font-size:12px;padding:9px 0;border-radius:10px;display:flex;align-items:center;justify-content:center;gap:6px;transition:transform .15s;cursor:pointer;font-family:inherit}
+.bf{flex:1;background:#185FA5;color:#fff;border:none;font-size:12px;font-weight:500;padding:10px 0;border-radius:99px;transition:transform .15s;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px}
+.bt2{flex:1;background:#DCE9F7;color:#0C447C;border:none;font-size:12px;font-weight:500;padding:10px 0;border-radius:99px;font-family:inherit}
+.bp:active,.bf:active{transform:scale(.94)}
+@keyframes hp1{0%,100%{box-shadow:0 0 0 0 rgba(31,31,30,.4)}50%{box-shadow:0 0 0 9px rgba(31,31,30,0)}}
+@keyframes hp2{0%,100%{box-shadow:0 0 0 0 rgba(24,95,165,.5)}50%{box-shadow:0 0 0 9px rgba(24,95,165,0)}}
+.scn.act .bp.next{animation:hp1 2.2s infinite}
+.scn.act .bf.next{animation:hp2 2.2s infinite}
+.fmut{color:#6f6e68}
+.fcrd{background:#fff;border:0.5px solid #e4e2da;border-radius:12px;padding:9px 12px}
+.fcrd.r{border:none;border-radius:20px;padding:11px 14px}
+.fkv{font-size:11px;margin:0 0 5px;display:flex;justify-content:space-between}
+.fkv:last-child{margin:0}
+.kc2{width:46px;height:46px;border-radius:50%;background:#E7EDF6;display:flex;align-items:center;justify-content:center;font-size:14px;margin:0 auto;cursor:pointer;user-select:none;transition:transform .15s,background .15s}
+.kc2:active{transform:scale(.88);background:#C7DCF2}
+.kc2.ghost{background:transparent;color:#5d6066}
+@keyframes hp3{0%,100%{box-shadow:0 0 0 0 rgba(24,95,165,.4)}50%{box-shadow:0 0 0 7px rgba(24,95,165,0)}}
+.hspick{border:1.5px solid #185FA5 !important;background:#fff !important}
+.scn.act .hspick{animation:hp3 2.2s infinite}
+.hspick svg{color:#185FA5 !important}
+.hspick #hssel{color:#0C447C;font-weight:500}
+.scn.act #pkeys.next .kc2:not(.ghost){animation:hp3 2.2s infinite}
+.pd{width:11px;height:11px;border-radius:50%;background:#DCE9F7;transition:background .25s}
+.pd.fill{background:#185FA5}
+@keyframes pop{from{transform:scale(.7);opacity:0}}
+.scn.act .ftoast{animation:pop .6s .35s backwards}
+@keyframes rise{from{transform:translateY(20px);opacity:0}}
+.scn.act .frise{animation:rise .65s .25s backwards}
+.ftile{border-radius:22px;padding:11px;height:106px;display:flex;flex-direction:column;overflow:hidden}
+.fnav{display:flex;justify-content:space-around;padding:7px 0 3px;font-size:11px;color:#44474c}
+.fnav span{text-align:center}
+.fnav .pillbg{display:block;padding:2px 14px;margin:0 auto 1px;width:fit-content;border-radius:99px}
+.gb{height:4px;border-radius:99px;margin:0 auto}
+
+.ctxrow{display:flex;align-items:center;justify-content:space-between;margin:0 4px 8px}
+.ctxpill{font-size:12px;font-weight:600;padding:4px 13px;border-radius:99px;background:#e6e3d9;color:#444441;transition:.3s;display:inline-flex;align-items:center;gap:6px}
+.wsb{background:#0C447C;color:#fff}
+.wbar{background:#0C447C;color:#fff;display:flex;align-items:center;gap:8px;padding:11px 16px 13px;font-size:14px;font-weight:600}
+.wbar svg{color:#fff !important}
+.wbar .avatar{margin-left:auto;width:26px;height:26px;border-radius:50%;background:#1f5fa0;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500}
+.ctxpill.w{background:#DCE9F7;color:#0C447C}
+.panel{flex:0 1 300px;min-width:250px}
+.explain{flex:1 1 320px;min-width:280px;max-width:440px;background:#fff;border:0.5px solid #dcd9cf;border-radius:18px;padding:20px 22px;transition:opacity .35s}
+.explain.fade{opacity:0}
+.explain .ebadge{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#185FA5;margin-bottom:6px}
+.explain h2{font-size:17px;font-weight:600;margin:0 0 14px;color:#1f1f1e}
+.explain h3{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#8a8983;margin:0 0 4px}
+.explain p.body{font-size:13.5px;color:#444441;line-height:1.6;margin:0 0 16px}
+.explain p.body:last-child{margin-bottom:0}
+.tip{position:relative;color:#185FA5;border-bottom:1px dotted #185FA5;cursor:help;outline:none}
+.tip .tipbox{position:absolute;left:0;bottom:calc(100% + 9px);width:220px;background:#0C447C;color:#fff;font-size:12px;font-weight:400;line-height:1.45;text-align:left;padding:9px 11px;border-radius:9px;box-shadow:0 8px 24px rgba(12,68,124,.22);opacity:0;visibility:hidden;transform:translateY(4px);transition:opacity .15s ease,transform .15s ease;z-index:40;pointer-events:none}
+.tip .tipbox::after{content:"";position:absolute;top:100%;left:18px;border:6px solid transparent;border-top-color:#0C447C}
+.tip:hover .tipbox,.tip:focus .tipbox{opacity:1;visibility:visible;transform:translateY(0)}
+.explain .etag{display:inline-block;font-size:11px;font-weight:500;background:#F1EFE8;color:#444441;border-radius:99px;padding:2px 10px;margin:2px 4px 0 0}
+.srow{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;cursor:pointer;border:0.5px solid transparent}
+.srow:hover{background:#e9e7df}
+.srow.on{background:#fff;border-color:#dcd9cf}
+.srow.done .snum{background:#D6F2E6;color:#085041}
+.snum{width:22px;height:22px;border-radius:50%;background:#e6e3d9;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;flex-shrink:0;transition:.3s}
+.srow.on .snum{background:#185FA5;color:#fff}
+.srow span:last-child{font-size:13px}
+#fdesc{font-size:13px;color:#6f6e68;line-height:1.55;margin:12px 4px 6px;min-height:3.2em}
+#fhint{font-size:12px;color:#185FA5;margin:0 4px 14px;display:flex;align-items:center;gap:6px;min-height:1.4em}
+.ctrls{display:flex;gap:8px;align-items:center;padding:0 4px}
+.ctrls button{background:#fff;border:0.5px solid #d3d1c7;border-radius:10px;padding:7px 14px;cursor:pointer;color:#1f1f1e;font-family:inherit;display:flex;align-items:center;gap:6px;font-size:13px}
+.ctrls button:hover{background:#f5f4ef}
+footer{margin-top:40px;font-size:12px;color:#8a8983;max-width:70ch}
+
+/* ===== Backend-Architektur ===== */
+.backend{margin-top:34px;background:#fff;border:0.5px solid #dcd9cf;border-radius:18px;padding:20px 22px 22px}
+.backend .bhead{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:3px}
+.backend h2{font-size:17px;font-weight:600;margin:0;color:#1f1f1e}
+.backend .bstep{font-size:12px;color:#6f6e68}
+.backend .bsub{font-size:13px;color:#6f6e68;margin:0 0 16px;max-width:78ch}
+.bdiagram{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.bdiagram>svg{display:block;width:100%;min-width:880px;height:auto}
+.bnote{font-size:13.5px;color:#444441;line-height:1.6;margin:16px 2px 0;min-height:3em;transition:opacity .3s}
+.bnote.fade{opacity:0}
+.bnote b{color:#0C447C;font-weight:600}
+.bexpl{max-width:none;margin-top:18px}
+.rightcol{flex:1 1 320px;min-width:280px;max-width:440px}
+.rightcol .explain{flex:none;max-width:none;width:100%}
+.explain .body b{color:#0C447C;font-weight:600}
+.tip .tipbox b{color:#fff;font-weight:600}
+#bknote{min-height:4.2em}
+.blegend{display:flex;flex-wrap:wrap;gap:7px 16px;margin:14px 2px 0;font-size:11.5px;color:#8a8983}
+.blegend span{display:inline-flex;align-items:center;gap:7px}
+.lgline{width:24px;border-top:2.6px dashed #185FA5;flex-shrink:0}
+.lgbox{width:13px;height:13px;border-radius:4px;border:2px solid #185FA5;background:#F4F7FC;flex-shrink:0}
+.lgdim{width:13px;height:13px;border-radius:4px;border:1.4px solid #d7d4ca;background:#fff;flex-shrink:0}
+
+.zband{fill:#faf8f2;stroke:#e3e0d6;stroke-width:1.2;stroke-dasharray:2 6}
+.zband.z-state{fill:#f6f8fc;stroke:#dde6f1}
+.zlbl{fill:#a7a59c;font-size:10.5px;font-weight:600;letter-spacing:.13em;font-family:inherit}
+
+.bnode{opacity:.55;transition:opacity .4s}
+.bnode.on{opacity:1}
+.bnode .card{fill:#fff;stroke:#e0ddd3;stroke-width:1.4;transition:stroke .4s,fill .4s}
+.bnode.on .card{stroke:#185FA5;stroke-width:2;fill:#F7FAFE}
+.bnode .med{fill:#ece9e1;transition:fill .4s}
+.bnode.on .med{fill:#DCE9F7}
+.bnode .halo{fill:#185FA5;opacity:0}
+.bnode.on .halo{animation:halo 2.4s ease-out infinite}
+.bnode .ico{color:#9a988f;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;overflow:hidden;transition:color .4s}
+.bnode.on .ico{color:#185FA5}
+.bnode .nt{font-weight:600;fill:#3a3a38;font-family:inherit;transition:fill .4s}
+.bnode.on .nt{fill:#0C447C}
+.bnode .ns{fill:#8a8983;font-family:inherit}
+.bnoots-frame{opacity:.72}
+.bnoots-frame.on{opacity:1}
+
+.chip{opacity:.4;transition:opacity .4s}
+.chip.on{opacity:1}
+.chip .chipbg{fill:#fff;stroke:#e3e0d6;stroke-width:1.2;transition:fill .4s,stroke .4s}
+.chip.on .chipbg{fill:#EAF2FC;stroke:#185FA5;stroke-width:1.5}
+.chip .chi{color:#9a988f;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;overflow:hidden;transition:color .4s}
+.chip.on .chi{color:#185FA5}
+.chip .cht{fill:#6f6e68;font-size:9px;font-weight:600;font-family:inherit;transition:fill .4s}
+.chip.on .cht{fill:#0C447C}
+.chip .cht2{fill:#a9a79e;font-size:6.5px;font-family:inherit;transition:fill .4s}
+.chip.on .cht2{fill:#4f7095}
+.chip .chk{opacity:0;transition:opacity .35s}
+.chip.done .chk{opacity:1}
+.chk circle{fill:#1f9d57}
+.chk path{stroke:#fff;stroke-width:1.6;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.ghost{fill:#f4f2ec;stroke:#dcd9cf;stroke-width:1.1;stroke-dasharray:2 4}
+.srcnote{fill:#6b6a62;font-size:8.5px;font-family:inherit}
+#reg-fan{opacity:.9}
+.fancard .fanrect{fill:#ece9e1;stroke:#d3d0c6;stroke-width:1}
+.fancard .fanico{color:#aaa89f;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;overflow:hidden}
+.stackcard .stkrect{fill:#edeae3;stroke:#d6d3c9;stroke-width:1}
+.stackcard .stkt{fill:#5f5e57;font-size:8.5px;font-family:inherit;font-weight:500}
+.stackcard .stkico{color:#9a988f;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;overflow:hidden}
+.regtile{fill:#f7f5ef;stroke:#d4d1c6;stroke-width:1}
+.regt{fill:#5a594f;font-size:9.5px;font-family:inherit}
+.regico{color:#8a887f;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;overflow:hidden}
+.bnode .role{fill:#5f7fa6;font-size:8.5px;font-weight:700;letter-spacing:.02em;font-family:inherit;transition:fill .4s}
+.bnode.on .role{fill:#185FA5}
+.bnode.damas .card{fill:#f3f1ea;stroke:#dcd9cf;stroke-width:1.3}
+.bnode.damas.on .card{fill:#eef3fb;stroke:#9FBEE6}
+.bnode.damas .ico{color:#a9a79e}.bnode.damas.on .ico{color:#185FA5}
+.dmt{fill:#86847b;font-size:8.5px;font-family:inherit;transition:fill .4s}.damas.on .dmt{fill:#3f6086}
+.bedge.support .track{stroke-dasharray:2 3}
+.bdiagram.haspl .bedge.on .flow{stroke:transparent;animation:none}
+.payload{filter:drop-shadow(0 1px 2px rgba(12,68,124,.18));transition:opacity .3s}
+.payload .plbg{fill:#fff;stroke:#185FA5;stroke-width:1.8}
+.payload .pltxt{fill:#0C447C;font-size:10.5px;font-weight:700;font-family:inherit}
+.payload .plico{color:#185FA5;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;overflow:hidden}
+.restbadge{transition:opacity .3s;filter:drop-shadow(0 4px 9px rgba(12,68,124,.32))}
+.restbadge .rbg{fill:#185FA5;stroke:none}
+.restbadge .rbtxt{fill:#fff;font-size:11.5px;font-weight:600;font-family:inherit}
+.restbadge .rbico{color:#fff;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;overflow:hidden}
+
+.bedge .track{fill:none;stroke:#d5d2c8;stroke-width:2.4;stroke-linecap:round;transition:stroke .4s}
+.bedge.on .track{stroke:#9FBEE6}
+.bedge .flow{fill:none;stroke:transparent;stroke-width:3.6;stroke-linecap:round;stroke-dasharray:2.5 8.5}
+.bedge.on .flow{stroke:#185FA5;animation:bflow .9s linear infinite}
+.bedge.on.bwd .flow{animation-direction:reverse}
+#flowarrow path{fill:#185FA5}
+.elbl{font-size:11px;fill:#0C447C;font-weight:600;opacity:0;paint-order:stroke;stroke:#F7FAFE;stroke-width:5px;stroke-linejoin:round;transition:opacity .3s;font-family:inherit}
+.elbl.show{opacity:1}
+@keyframes bflow{to{stroke-dashoffset:-11}}
+@keyframes halo{0%{r:24;opacity:.32}70%,100%{r:40;opacity:0}}
+@media (prefers-reduced-motion:reduce){.bedge.on .flow{animation:none}.bnode.on .halo{animation:none}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute"><symbol id="tb-wifi" viewBox="0 0 24 24"><path fill="none" stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M12 18l.01 0" />
+  <path d="M9.172 15.172a4 4 0 0 1 5.656 0" />
+  <path d="M6.343 12.343a8 8 0 0 1 11.314 0" />
+  <path d="M3.515 9.515c4.686 -4.687 12.284 -4.687 17 0" /></symbol><symbol id="tb-battery-3" viewBox="0 0 24 24"><path fill="none" stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M6 7h11a2 2 0 0 1 2 2v.5a.5 .5 0 0 0 .5 .5a.5 .5 0 0 1 .5 .5v3a.5 .5 0 0 1 -.5 .5a.5 .5 0 0 0 -.5 .5v.5a2 2 0 0 1 -2 2h-11a2 2 0 0 1 -2 -2v-6a2 2 0 0 1 2 -2" />
+  <path d="M7 10l0 4" />
+  <path d="M10 10l0 4" />
+  <path d="M13 10l0 4" /></symbol><symbol id="tb-chevron-left" viewBox="0 0 24 24"><path fill="none" stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M15 6l-6 6l6 6" /></symbol><symbol id="tb-chevron-right" viewBox="0 0 24 24"><path fill="none" stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M9 6l6 6l-6 6" /></symbol><symbol id="tb-chevron-down" viewBox="0 0 24 24"><path fill="none" stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M6 9l6 6l6 -6" /></symbol><symbol id="tb-lock" viewBox="0 0 24 24"><path fill="none" stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M5 13a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-6z" />
+  <path d="M11 16a1 1 0 1 0 2 0a1 1 0 0 0 -2 0" />
+  <path d="M8 11v-4a4 4 0 1 1 8 0v4" /></symbol><symbol id="tb-refresh" viewBox="0 0 24 24"><path fill="none" stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4" />
+  <path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" /></symbol><symbol id="tb-school" viewBox="0 0 24 24"><path fill="none" stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M22 9l-10 -4l-10 4l10 4l10 -4v6" />
+  <path d="M6 10.6v5.4a6 3 0 0 0 12 0v-5.4" /></symbol><symbol id="tb-circle-check" viewBox="0 0 24 24"><path fill="none" stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" />
+  <path d="M9 12l2 2l4 -4" /></symbol><symbol id="tb-file-certificate" viewBox="0 0 24 24"><path fill="none" stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+  <path d="M5 8v-3a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2h-5" />
+  <path d="M6 14m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" />
+  <path d="M4.5 17l-1.5 5l3 -1.5l3 1.5l-1.5 -5" /></symbol><symbol id="tb-home" viewBox="0 0 24 24"><path fill="none" stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M5 12l-2 0l9 -9l9 9l-2 0" />
+  <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" />
+  <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" /></symbol><symbol id="tb-id" viewBox="0 0 24 24"><path fill="none" stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M3 4m0 3a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v10a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3z" />
+  <path d="M9 10m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
+  <path d="M15 8l2 0" />
+  <path d="M15 12l2 0" />
+  <path d="M7 16l10 0" /></symbol><symbol id="tb-wallet" viewBox="0 0 24 24"><path fill="none" stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M17 8v-3a1 1 0 0 0 -1 -1h-10a2 2 0 0 0 0 4h12a1 1 0 0 1 1 1v3m0 4v3a1 1 0 0 1 -1 1h-12a2 2 0 0 1 -2 -2v-12" />
+  <path d="M20 12v4h-4a2 2 0 0 1 0 -4h4" /></symbol><symbol id="tb-shield-check" viewBox="0 0 24 24"><path fill="none" stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.46 20.846a12 12 0 0 1 -7.96 -14.846a12 12 0 0 0 8.5 -3a12 12 0 0 0 8.5 3a12 12 0 0 1 -.09 7.06" />
+  <path d="M15 19l2 2l4 -4" /></symbol><symbol id="tb-discount-check" viewBox="0 0 24 24"><path fill="none" stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M5 7.2a2.2 2.2 0 0 1 2.2 -2.2h1a2.2 2.2 0 0 0 1.55 -.64l.7 -.7a2.2 2.2 0 0 1 3.12 0l.7 .7c.412 .41 .97 .64 1.55 .64h1a2.2 2.2 0 0 1 2.2 2.2v1c0 .58 .23 1.138 .64 1.55l.7 .7a2.2 2.2 0 0 1 0 3.12l-.7 .7a2.2 2.2 0 0 0 -.64 1.55v1a2.2 2.2 0 0 1 -2.2 2.2h-1a2.2 2.2 0 0 0 -1.55 .64l-.7 .7a2.2 2.2 0 0 1 -3.12 0l-.7 -.7a2.2 2.2 0 0 0 -1.55 -.64h-1a2.2 2.2 0 0 1 -2.2 -2.2v-1a2.2 2.2 0 0 0 -.64 -1.55l-.7 -.7a2.2 2.2 0 0 1 0 -3.12l.7 -.7a2.2 2.2 0 0 0 .64 -1.55v-1" />
+  <path d="M9 12l2 2l4 -4" /></symbol><symbol id="tb-fingerprint" viewBox="0 0 24 24"><path fill="none" stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M18.9 7a8 8 0 0 1 1.1 5v1a6 6 0 0 0 .8 3" />
+  <path d="M8 11a4 4 0 0 1 8 0v1a10 10 0 0 0 2 6" />
+  <path d="M12 11v2a14 14 0 0 0 2.5 8" />
+  <path d="M8 15a18 18 0 0 0 1.8 6" />
+  <path d="M4.9 19a22 22 0 0 1 -.9 -7v-1a8 8 0 0 1 12 -6.95" /></symbol><symbol id="tb-backspace" viewBox="0 0 24 24"><path fill="none" stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M20 6a1 1 0 0 1 1 1v10a1 1 0 0 1 -1 1h-11l-5 -5a1.5 1.5 0 0 1 0 -2l5 -5z" />
+  <path d="M12 10l4 4m0 -4l-4 4" /></symbol><symbol id="tb-qrcode" viewBox="0 0 24 24"><path fill="none" stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M4 4m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" />
+  <path d="M7 17l0 .01" />
+  <path d="M14 4m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" />
+  <path d="M7 7l0 .01" />
+  <path d="M4 14m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" />
+  <path d="M17 7l0 .01" />
+  <path d="M14 14l3 0" />
+  <path d="M20 14l0 .01" />
+  <path d="M14 14l0 3" />
+  <path d="M14 20l3 0" />
+  <path d="M17 17l3 0" />
+  <path d="M20 17l0 3" /></symbol><symbol id="tb-history" viewBox="0 0 24 24"><path fill="none" stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M12 8l0 4l2 2" />
+  <path d="M3.05 11a9 9 0 1 1 .5 4m-.5 5v-5h5" /></symbol><symbol id="tb-settings" viewBox="0 0 24 24"><path fill="none" stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z" />
+  <path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" /></symbol><symbol id="tb-world" viewBox="0 0 24 24"><path fill="none" stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" />
+  <path d="M3.6 9h16.8" />
+  <path d="M3.6 15h16.8" />
+  <path d="M11.5 3a17 17 0 0 0 0 18" />
+  <path d="M12.5 3a17 17 0 0 1 0 18" /></symbol><symbol id="tb-device-mobile" viewBox="0 0 24 24"><path fill="none" stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M6 5a2 2 0 0 1 2 -2h8a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2h-8a2 2 0 0 1 -2 -2z" />
+  <path d="M11 4l2 0" />
+  <path d="M12 17l.01 0" /></symbol><symbol id="tb-building-bank" viewBox="0 0 24 24"><path fill="none" stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M3 21l18 0" />
+  <path d="M3 10l18 0" />
+  <path d="M5 6l7 -3l7 3" />
+  <path d="M4 10l0 11" />
+  <path d="M20 10l0 11" />
+  <path d="M8 14l0 3" />
+  <path d="M12 14l0 3" />
+  <path d="M16 14l0 3" /></symbol><symbol id="tb-arrows-exchange-2" viewBox="0 0 24 24"><path fill="none" stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M7 10h14l-4 -4" />
+  <path d="M17 14h-14l4 4" /></symbol><symbol id="tb-map-pin" viewBox="0 0 24 24"><path fill="none" stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M9 11a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" />
+  <path d="M17.657 16.657l-4.243 4.243a2 2 0 0 1 -2.827 0l-4.244 -4.243a8 8 0 1 1 11.314 0z" /></symbol><symbol id="tb-list-check" viewBox="0 0 24 24"><path fill="none" stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M3.5 5.5l1.5 1.5l2.5 -2.5" />
+  <path d="M3.5 11.5l1.5 1.5l2.5 -2.5" />
+  <path d="M3.5 17.5l1.5 1.5l2.5 -2.5" />
+  <path d="M11 6l9 0" />
+  <path d="M11 12l9 0" />
+  <path d="M11 18l9 0" /></symbol><symbol id="tb-signature" viewBox="0 0 24 24"><path fill="none" stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M3 17c3.333 -3.333 5 -6 5 -8c0 -3 -1 -3 -2 -3s-2.032 1.085 -2 3c.034 2.048 1.658 4.877 2.5 6c1.5 2 2.5 2 3.5 1l2 -2c1 4 2.5 5.5 4 5.5" /></symbol><symbol id="tb-file-text" viewBox="0 0 24 24"><path fill="none" stroke="none" d="M0 0h24v24H0z"/>
+<path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" /><path d="M9 9l1 0" /><path d="M9 13l6 0" /><path d="M9 17l6 0" /></symbol><symbol id="tb-database" viewBox="0 0 24 24"><path fill="none" stroke="none" d="M0 0h24v24H0z"/>
+<path d="M12 6m-8 0a8 3 0 1 0 16 0a8 3 0 1 0 -16 0" /><path d="M4 6v6a8 3 0 0 0 16 0v-6" /><path d="M4 12v6a8 3 0 0 0 16 0v-6" /></symbol><symbol id="tb-certificate" viewBox="0 0 24 24"><path fill="none" stroke="none" d="M0 0h24v24H0z"/>
+<path d="M15 15m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" /><path d="M13 17.5v4.5l2 -1.5l2 1.5v-4.5" /><path d="M10 19h-5a2 2 0 0 1 -2 -2v-10a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v10a2 2 0 0 1 -1 1.73" /><path d="M6 9l12 0" /><path d="M6 12l3 0" /><path d="M6 15l2 0" /></symbol><symbol id="tb-book" viewBox="0 0 24 24"><path fill="none" stroke="none" d="M0 0h24v24H0z"/>
+<path d="M3 19a9 9 0 0 1 9 0a9 9 0 0 1 9 0" /><path d="M3 6a9 9 0 0 1 9 0a9 9 0 0 1 9 0" /><path d="M3 6l0 13" /><path d="M12 6l0 13" /><path d="M21 6l0 13" /></symbol></svg>
+<div class="wrap">
+
+<div class="disclaimer" role="note" aria-label="Hinweis: Nur zur internen Verwendung">
+  <p class="dhead"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c2746c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.871l-8.106 -13.534a1.914 1.914 0 0 0 -3.274 0z"/><path d="M12 16h.01"/></svg>Nur zur internen Verwendung</p>
+  <p class="dbody">Es handelt sich um eine XXX-interne Darstellung. Die Darstellung dient ausschließlich der Veranschaulichung zur Konzeption mit Beispieldaten; die gezeigten Visualisierungen sind nachgestellt. Die tatsächliche Umsetzung in 2027 wird grafisch abweichen. Die IT-Architektur zeigt das Zielbild der NOOTS-Integration.</p>
+</div>
+
+<header>
+  <h1>Ausstellung der Immatrikulationsbescheinigung</h1>
+  <p>So läuft die Ausstellung in die EUDI-Wallet Schritt für Schritt ab – alles auf einem Smartphone. Im dargestellten Telefon jeweils auf die hervorgehobene Schaltfläche (bzw. die PIN-Tasten) tippen, um einen Schritt weiterzugehen.</p>
+</header>
+
+<div class="stage">
+
+<div style="flex-shrink:0">
+  <div class="ctxrow">
+    <span id="fctx" class="ctxpill">Mobiler Browser</span>
+    <span id="fstep" style="font-size:12px;color:#6f6e68">Schritt 1/8</span>
+  </div>
+  <div class="fphone"><div class="fscr">
+
+    <div class="scn act" id="sc1"><div class="island"></div><div class="fsb"><span>9:41</span><span></span><span class="icr"><svg class="tic" width="12" height="12"><use href="#tb-wifi"/></svg><svg class="tic" width="12" height="12"><use href="#tb-battery-3"/></svg></span></div>
+      <div class="furl"><svg class="tic" width="13" height="13"><use href="#tb-chevron-left"/></svg><span class="fpill"><svg class="tic" width="11" height="11"><use href="#tb-lock"/></svg> <span class="cfg-url"></span></span><svg class="tic" width="12" height="12"><use href="#tb-refresh"/></svg></div>
+      <div class="stripes"><span style="background:#000"></span><span style="background:#E2001A"></span><span style="background:#F5C400"></span></div>
+      <div class="fbd">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+          <span class="flg" style="width:20px;height:14px"><span class="b"></span><span class="r"></span><span class="g"></span></span>
+          <div><p style="font-size:12px;font-weight:500;line-height:1.2">Zentraler Issuer Dienst (ZID)</p><p class="fmut" style="font-size:11px;line-height:1.2">Ein Service des Bundes</p></div>
+        </div>
+        <p style="font-size:14px;font-weight:500;margin-bottom:2px">Nachweis auswählen</p>
+        <p class="fmut" style="font-size:11px;margin-bottom:12px">Welchen Nachweis möchten Sie in die EUDI-Wallet laden?</p>
+        <div class="fcrd" style="border:1.5px solid #1f1f1e;margin-bottom:7px;display:flex;gap:10px;align-items:center">
+          <svg class="tic" width="17" height="17"><use href="#tb-school"/></svg>
+          <p style="font-size:12px;font-weight:500">Immatrikulations-<br>bescheinigung</p>
+          <svg class="tic" width="16" height="16" style="margin-left:auto"><use href="#tb-circle-check"/></svg>
+        </div>
+        <div class="fcrd" style="margin-bottom:7px;display:flex;gap:10px;align-items:center;opacity:.45">
+          <svg class="tic" width="17" height="17"><use href="#tb-file-certificate"/></svg>
+          <div><p style="font-size:12px">Führungszeugnis</p><p class="fmut" style="font-size:11px">Nicht verfügbar</p></div>
+        </div>
+        <div class="fcrd" style="margin-bottom:7px;display:flex;gap:10px;align-items:center;opacity:.45">
+          <svg class="tic" width="17" height="17"><use href="#tb-home"/></svg>
+          <div><p style="font-size:12px">Meldebescheinigung</p><p class="fmut" style="font-size:11px">Nicht verfügbar</p></div>
+        </div>
+        <div style="margin-top:auto"><button class="bp next" id="b1">Weiter</button></div>
+      </div>
+      <div class="gb" style="width:78px;background:#d3d1c7;margin:8px auto"></div>
+    </div>
+
+    <div class="scn" id="sc2"><div class="island"></div><div class="fsb"><span>9:42</span><span></span><span class="icr"><svg class="tic" width="12" height="12"><use href="#tb-wifi"/></svg><svg class="tic" width="12" height="12"><use href="#tb-battery-3"/></svg></span></div>
+      <div class="furl"><svg class="tic" width="13" height="13"><use href="#tb-chevron-left"/></svg><span class="fpill"><svg class="tic" width="11" height="11"><use href="#tb-lock"/></svg> <span class="cfg-url"></span></span><svg class="tic" width="12" height="12"><use href="#tb-refresh"/></svg></div>
+      <div class="stripes"><span style="background:#000"></span><span style="background:#E2001A"></span><span style="background:#F5C400"></span></div>
+      <div class="fbd">
+        <p class="fmut" style="font-size:11px;margin-bottom:5px">Schritt 2 von 2</p>
+        <div style="display:flex;gap:4px;margin-bottom:14px"><span style="flex:1;height:3px;background:#1f1f1e;border-radius:99px"></span><span style="flex:1;height:3px;background:#1f1f1e;border-radius:99px"></span></div>
+        <p style="font-size:14px;font-weight:500;margin-bottom:2px">Ihre Hochschule</p>
+        <p class="fmut" style="font-size:11px;margin-bottom:12px">An welcher Hochschule sind Sie immatrikuliert?</p>
+        <label class="fmut" style="font-size:11px" for="hssel">Hochschule · zum Auswählen tippen</label>
+        <div class="fcrd hspick" style="position:relative;margin:5px 0 12px;padding:0">
+          <select id="hssel" style="appearance:none;-webkit-appearance:none;width:100%;border:none;background:transparent;font:inherit;font-size:12px;color:inherit;padding:9px 26px 9px 12px;border-radius:12px;cursor:pointer">
+            <option>Hochschule Berlin</option>
+            <option>Hochschule München</option>
+            <option>Hochschule Stuttgart</option>
+          </select>
+          <svg class="tic" width="13" height="13" style="color:#888780;position:absolute;right:10px;top:50%;transform:translateY(-50%);pointer-events:none"><use href="#tb-chevron-down"/></svg>
+        </div>
+        <div style="margin-top:auto"><button class="bp next" id="b2">Weiter</button></div>
+      </div>
+      <div class="gb" style="width:78px;background:#d3d1c7;margin:8px auto"></div>
+    </div>
+
+    <div class="scn" id="sc2b"><div class="island"></div><div class="fsb"><span>9:42</span><span></span><span class="icr"><svg class="tic" width="12" height="12"><use href="#tb-wifi"/></svg><svg class="tic" width="12" height="12"><use href="#tb-battery-3"/></svg></span></div>
+      <div class="furl"><svg class="tic" width="13" height="13"><use href="#tb-chevron-left"/></svg><span class="fpill"><svg class="tic" width="11" height="11"><use href="#tb-lock"/></svg> <span class="cfg-url2"></span></span><svg class="tic" width="12" height="12"><use href="#tb-refresh"/></svg></div>
+      <div class="stripes"><span style="background:#000"></span><span style="background:#E2001A"></span><span style="background:#F5C400"></span></div>
+      <div class="fbd">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+          <span class="flg" style="width:20px;height:14px"><span class="b"></span><span class="r"></span><span class="g"></span></span>
+          <div><p style="font-size:12px;font-weight:500;line-height:1.2">Zentraler Issuer Dienst (ZID)</p><p class="fmut" style="font-size:11px;line-height:1.2"><span class="cfg-issuer"></span></p></div>
+        </div>
+        <p style="font-size:14px;font-weight:500;margin-bottom:2px">Identifizierung erforderlich</p>
+        <p class="fmut" style="font-size:11px;margin-bottom:12px">Zur Ausstellung dieses Nachweises identifizieren Sie sich mit Ihrer PID aus der EUDI-Wallet.</p>
+        <div class="fcrd" style="margin-bottom:10px;display:flex;gap:10px;align-items:flex-start">
+          <svg class="tic" width="17" height="17" style="color:#185FA5;flex-shrink:0;margin-top:1px"><use href="#tb-id"/></svg>
+          <div>
+            <p style="font-size:12px;font-weight:500;margin-bottom:2px">Immatrikulationsnachweis</p>
+            <p class="fmut" style="font-size:11px"><span class="cfg-hs">Hochschule Berlin</span> · <span class="cfg-issuer">Bund</span></p>
+          </div>
+        </div>
+        <div style="margin-top:auto"><button class="bp next" id="b2b"><svg class="tic" width="13" height="13"><use href="#tb-wallet"/></svg> Mit PID identifizieren</button>
+        <p class="fmut" style="font-size:11px;margin-top:7px;text-align:center">Öffnet Ihre EUDI-Wallet</p></div>
+      </div>
+      <div class="gb" style="width:78px;background:#d3d1c7;margin:8px auto"></div>
+    </div>
+
+    <div class="scn m3" id="sc3"><div class="island"></div><div class="fsb wsb"><span>9:42</span><span></span><span class="icr"><svg class="tic" width="12" height="12"><use href="#tb-wifi"/></svg><svg class="tic" width="12" height="12"><use href="#tb-battery-3"/></svg></span></div>
+      <div class="wbar"><svg class="tic" width="18" height="18"><use href="#tb-shield-check"/></svg> EUDI-Wallet</div>
+      <div class="fbd">
+        <div class="frise" style="display:flex;align-items:center;gap:9px;background:#fff;border-radius:99px;padding:7px 13px 7px 7px;margin-bottom:11px;width:fit-content">
+          <span style="width:30px;height:30px;border-radius:50%;background:#E7EDF6;display:flex;align-items:center;justify-content:center"><span class="flg" style="width:15px;height:11px"><span class="b"></span><span class="r"></span><span class="g"></span></span></span>
+          <div><p style="font-size:12px;font-weight:500;line-height:1.25"><span class="cfg-issuer">Bund</span></p><p style="font-size:11px;color:#0F6E56;display:flex;align-items:center;gap:3px;line-height:1.25"><svg class="tic" width="11" height="11"><use href="#tb-discount-check"/></svg> Verifizierte Stelle</p></div>
+        </div>
+        <p style="font-size:14px;font-weight:500;margin-bottom:2px">Datenabfrage aus Ihrer PID</p>
+        <p class="fmut" style="font-size:11px;margin-bottom:10px">Folgende Daten werden übermittelt:</p>
+        <div class="fcrd r" style="margin-bottom:8px">
+          <p class="fkv"><span class="fmut">Familienname</span><span>MUSTERMANN</span></p>
+          <p class="fkv"><span class="fmut">Vorname</span><span>ERIKA</span></p>
+          <p class="fkv"><span class="fmut">Geburtsdatum</span><span>12.08.1983</span></p>
+        </div>
+        <div style="background:#E7EDF6;border-radius:16px;padding:8px 12px">
+          <p style="font-size:11px;color:#44474c"><span style="font-weight:500">Zweck:</span> Ausstellung Ihrer Immatrikulationsbescheinigung</p>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:auto">
+          <button class="bt2">Ablehnen</button>
+          <button class="bf next" id="b3">Freigeben</button>
+        </div>
+      </div>
+      <div class="gb" style="width:84px;background:#c6c9ce;margin:5px auto 7px"></div>
+    </div>
+
+    <div class="scn m3" id="sc4"><div class="island"></div><div class="fsb wsb"><span>9:43</span><span></span><span class="icr"><svg class="tic" width="12" height="12"><use href="#tb-wifi"/></svg><svg class="tic" width="12" height="12"><use href="#tb-battery-3"/></svg></span></div>
+      <div class="wbar"><svg class="tic" width="18" height="18"><use href="#tb-shield-check"/></svg> EUDI-Wallet</div>
+      <div class="fbd" style="text-align:center">
+        <div id="pinentry" style="display:flex;flex-direction:column;flex:1;min-height:0">
+        <span style="width:46px;height:46px;border-radius:50%;background:#DCE9F7;display:inline-flex;align-items:center;justify-content:center;margin:2px auto 0"><svg class="tic" width="21" height="21" style="color:#0C447C"><use href="#tb-lock"/></svg></span>
+        <p style="font-size:14px;font-weight:500;margin:8px 0 2px">Freigabe bestätigen</p>
+        <p class="fmut" style="font-size:11px;margin-bottom:14px">Geben Sie Ihre Wallet-PIN ein</p>
+        <div style="display:flex;justify-content:center;gap:9px;margin-bottom:14px" id="pdots">
+          <span class="pd"></span><span class="pd"></span><span class="pd"></span><span class="pd"></span><span class="pd"></span><span class="pd"></span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:auto" class="next" id="pkeys">
+          <div class="kc2">1</div><div class="kc2">2</div><div class="kc2">3</div>
+          <div class="kc2">4</div><div class="kc2">5</div><div class="kc2">6</div>
+          <div class="kc2">7</div><div class="kc2">8</div><div class="kc2">9</div>
+          <div class="kc2 ghost" data-k="fp"><svg class="tic" width="18" height="18"><use href="#tb-fingerprint"/></svg></div><div class="kc2">0</div><div class="kc2 ghost" data-k="bs"><svg class="tic" width="16" height="16"><use href="#tb-backspace"/></svg></div>
+        </div>
+        </div>
+        <div id="pinok" style="display:none;flex:1;flex-direction:column;align-items:center;justify-content:center">
+          <span style="width:54px;height:54px;border-radius:50%;background:#D6F2E6;display:inline-flex;align-items:center;justify-content:center"><svg class="tic" width="28" height="28" style="color:#0F6E56"><use href="#tb-circle-check"/></svg></span>
+          <p style="font-size:15px;font-weight:500;margin-top:12px">Anmeldung erfolgreich</p>
+          <p class="fmut" style="font-size:11px;margin-top:2px">Ihre Daten werden übertragen …</p>
+        </div>
+      </div>
+      <div class="gb" style="width:84px;background:#c6c9ce;margin:5px auto 7px"></div>
+    </div>
+
+    <div class="scn" id="sc5"><div class="island"></div><div class="fsb"><span>9:43</span><span></span><span class="icr"><svg class="tic" width="12" height="12"><use href="#tb-wifi"/></svg><svg class="tic" width="12" height="12"><use href="#tb-battery-3"/></svg></span></div>
+      <div class="furl"><svg class="tic" width="13" height="13"><use href="#tb-chevron-left"/></svg><span class="fpill"><svg class="tic" width="11" height="11"><use href="#tb-lock"/></svg> <span class="cfg-url2"></span></span><svg class="tic" width="12" height="12"><use href="#tb-refresh"/></svg></div>
+      <div class="stripes"><span style="background:#000"></span><span style="background:#E2001A"></span><span style="background:#F5C400"></span></div>
+      <div class="fbd">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+          <span class="flg" style="width:20px;height:14px"><span class="b"></span><span class="r"></span><span class="g"></span></span>
+          <div><p style="font-size:12px;font-weight:500;line-height:1.2">Zentraler Issuer Dienst (ZID)</p><p class="fmut" style="font-size:11px;line-height:1.2"><span class="cfg-issuer"></span></p></div>
+        </div>
+        <div class="frise" style="text-align:center;padding-top:8px">
+          <span style="width:50px;height:50px;border-radius:50%;background:#E1F5EE;display:inline-flex;align-items:center;justify-content:center"><svg class="tic" width="26" height="26" style="color:#0F6E56"><use href="#tb-circle-check"/></svg></span>
+          <p style="font-size:14px;font-weight:500;margin:10px 0 4px">Identifizierung erfolgreich</p>
+          <p class="fmut" style="font-size:11px;line-height:1.5">Ihre Immatrikulationsbescheinigung steht bereit und kann jetzt ausgestellt werden.</p>
+        </div>
+        <div style="margin-top:auto">
+          <button class="bp next" id="b5"><svg class="tic" width="13" height="13"><use href="#tb-wallet"/></svg> Nachweis zur Wallet hinzufügen</button>
+          <p class="fmut" style="font-size:11px;margin-top:7px;text-align:center">Sie werden zur EUDI-Wallet weitergeleitet</p>
+        </div>
+      </div>
+      <div class="gb" style="width:78px;background:#d3d1c7;margin:8px auto"></div>
+    </div>
+
+    <div class="scn m3" id="sc6"><div class="island"></div><div class="fsb wsb"><span>9:44</span><span></span><span class="icr"><svg class="tic" width="12" height="12"><use href="#tb-wifi"/></svg><svg class="tic" width="12" height="12"><use href="#tb-battery-3"/></svg></span></div>
+      <div class="wbar"><svg class="tic" width="18" height="18"><use href="#tb-shield-check"/></svg> EUDI-Wallet</div>
+      <div class="fbd">
+        <p style="font-size:14px;font-weight:500;margin-bottom:2px">Nachweis annehmen?</p>
+        <p class="fmut" style="font-size:11px;margin-bottom:10px"><span class="cfg-issuer">Bund</span> stellt Ihnen folgenden Nachweis aus:</p>
+        <div class="frise" style="background:#0C447C;border-radius:24px 24px 24px 8px;padding:13px 14px;color:#E6F1FB;margin-bottom:8px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+            <span style="display:flex;align-items:center;gap:6px;font-size:11px;color:#B5D4F4"><span style="width:22px;height:22px;border-radius:50%;background:#E6F1FB;display:inline-flex;align-items:center;justify-content:center"><span class="flg" style="width:14px;height:10px"><span class="b"></span><span class="r"></span><span class="g"></span></span></span> <span class="cfg-issuer">Bund</span></span>
+            <svg class="tic" width="17" height="17" style="color:#85B7EB"><use href="#tb-school"/></svg>
+          </div>
+          <p style="font-size:12px;font-weight:500;margin-bottom:8px;line-height:1.35">Immatrikulations-<br>bescheinigung</p>
+          <p style="font-size:11px;color:#B5D4F4">Erika Mustermann</p>
+          <p style="font-size:11px;color:#B5D4F4;margin-top:2px"><span class="cfg-hs">Hochschule Berlin</span> · SoSe 2026</p>
+        </div>
+        <div class="fcrd r" style="border-radius:8px 20px 20px 20px">
+          <p class="fkv"><span class="fmut">Aussteller</span><span class="cfg-issuer">Bund</span></p>
+          <p class="fkv"><span class="fmut">Gültig bis</span><span>30.09.2026</span></p>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:auto">
+          <button class="bt2">Ablehnen</button>
+          <button class="bf next" id="b6">Annehmen</button>
+        </div>
+      </div>
+      <div class="gb" style="width:84px;background:#c6c9ce;margin:5px auto 7px"></div>
+    </div>
+
+    <div class="scn m3" id="sc7"><div class="island"></div><div class="fsb wsb"><span>9:44</span><span></span><span class="icr"><svg class="tic" width="12" height="12"><use href="#tb-wifi"/></svg><svg class="tic" width="12" height="12"><use href="#tb-battery-3"/></svg></span></div>
+      <div class="wbar"><svg class="tic" width="18" height="18"><use href="#tb-shield-check"/></svg> EUDI-Wallet<span class="avatar">EM</span></div>
+      <div class="fbd">
+        <div class="ftoast" style="display:flex;align-items:center;gap:7px;background:#D6F2E6;border-radius:99px;padding:7px 13px;margin-bottom:11px;width:fit-content">
+          <svg class="tic" width="14" height="14" style="color:#0F6E56"><use href="#tb-circle-check"/></svg>
+          <p style="font-size:11px;color:#085041">Nachweis hinzugefügt</p>
+        </div>
+        <p style="font-size:15px;font-weight:500;margin-bottom:2px">Hallo, Erika</p>
+        <p class="fmut" style="font-size:11px;margin-bottom:10px">2 Nachweise in Ihrer Wallet</p>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div class="frise" style="background:#0C447C;color:#E6F1FB;border-radius:18px;padding:13px 15px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+              <svg class="tic" width="18" height="18" style="color:#85B7EB"><use href="#tb-school"/></svg>
+              <span style="font-size:11px;padding:1px 9px;border-radius:99px;font-weight:600;background:#E6F1FB;color:#0C447C">Neu</span>
+            </div>
+            <p style="font-size:12.5px;font-weight:600;line-height:1.3">Immatrikulations-<br>bescheinigung</p>
+            <p style="font-size:11px;color:#B5D4F4;margin-top:3px"><span class="cfg-issuer">BVA</span> · gültig bis 30.09.2026</p>
+          </div>
+          <div style="background:#26215C;color:#EEEDFE;border-radius:18px;padding:13px 15px">
+            <div style="margin-bottom:8px"><svg class="tic" width="18" height="18" style="color:#AFA9EC"><use href="#tb-id"/></svg></div>
+            <p style="font-size:12.5px;font-weight:600;line-height:1.3">PID</p>
+            <p style="font-size:11px;color:#CECBF6;margin-top:3px">Bundesrepublik Deutschland</p>
+          </div>
+        </div>
+      </div>
+      <div style="background:#EAF0F9">
+        <div class="fnav">
+          <span style="color:#0C447C;font-weight:500"><span class="pillbg" style="background:#C7DCF2"><svg class="tic" width="15" height="15"><use href="#tb-wallet"/></svg></span>Wallet</span>
+          <span><span class="pillbg"><svg class="tic" width="15" height="15"><use href="#tb-qrcode"/></svg></span>Vorzeigen</span>
+          <span><span class="pillbg"><svg class="tic" width="15" height="15"><use href="#tb-history"/></svg></span>Verlauf</span>
+          <span><span class="pillbg"><svg class="tic" width="15" height="15"><use href="#tb-settings"/></svg></span>Mehr</span>
+        </div>
+        <div class="gb" style="width:84px;background:#aeb4bd;margin:2px auto 7px"></div>
+      </div>
+    </div>
+
+  </div></div>
+</div>
+
+<div class="panel">
+  <div id="flist"></div>
+  <p id="fdesc"></p>
+  <p id="fhint"></p>
+  <div class="ctrls">
+    <button id="fprev" aria-label="Vorheriger Schritt"><svg class="tic" width="16" height="16"><use href="#tb-chevron-left"/></svg> Zurück</button>
+    <button id="fnext" aria-label="Nächster Schritt">Weiter <svg class="tic" width="16" height="16"><use href="#tb-chevron-right"/></svg></button>
+    <button id="frst" aria-label="Von vorn starten" style="margin-left:auto"><svg class="tic" width="16" height="16"><use href="#tb-refresh"/></svg> Von vorn</button>
+  </div>
+</div>
+
+<div class="rightcol">
+  <div class="explain" id="fexp">
+    <p class="ebadge" id="ebadge">Was der Nutzer am Smartphone sieht</p>
+    <h2 id="etitle"></h2>
+    <p class="body" id="ewhat"></p>
+  </div>
+  <div class="explain bexpl" id="bknotebox">
+    <p class="ebadge">Im Hintergrund &#183; Technische Details</p>
+    <p class="body" id="bknote"></p>
+  </div>
+</div>
+
+</div>
+
+<section class="backend">
+  <div class="bhead">
+    <h2>Was im Hintergrund passiert</h2>
+  </div>
+
+  <div class="bdiagram">
+    <svg viewBox="0 0 1180 488" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Wie die Ausstellung im Hintergrund abläuft">
+      <defs>
+        <marker id="flowarrow" viewBox="0 0 10 10" refX="7.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M1 1 L9 5 L1 9 Z"/>
+        </marker>
+      </defs>
+
+      <g class="zone"><rect class="zband" x="16" y="60" width="190" height="408" rx="22"/><text class="zlbl" x="34" y="84">ANWENDER</text></g>
+      <g class="zone"><rect class="zband z-state" x="224" y="60" width="288" height="408" rx="22"/><text class="zlbl" x="242" y="84">AUSSTELLUNG &amp; SIGNATUR</text></g>
+      <g class="zone"><rect class="zband z-state" x="530" y="60" width="328" height="408" rx="22"/><text class="zlbl" x="548" y="84">NOOTS</text><text class="zlbl" x="548" y="96" style="font-size:8px;letter-spacing:.03em">NATIONALES ONCE-ONLY-TECHNICAL-SYSTEM</text></g>
+      <g class="zone"><rect class="zband" x="876" y="60" width="288" height="408" rx="22"/><text class="zlbl" x="894" y="84">DATENQUELLEN (REGISTER)</text></g>
+
+      <!-- Verbindungen -->
+      <g class="bedge" id="ed-browser-bva"><path class="track" d="M204 320 L271 320"/><path class="flow" d="M204 320 L271 320"/></g>
+      <g class="bedge" id="ed-wallet-bva"><path class="track" d="M204 258 L271 258"/><path class="flow" d="M204 258 L271 258"/></g>
+      <g class="bedge support" id="ed-bva-fsig"><path class="track" d="M352 391 L352 370"/></g>
+      <g class="bedge" id="ed-bva-noots"><path class="track" d="M433 258 L530 258"/><path class="flow" d="M433 258 L530 258"/></g>
+      <g class="bedge" id="ed-noots-dp"><path class="track" d="M858 258 L940 258"/><path class="flow" d="M858 258 L940 258"/></g>
+      <g class="bedge support" id="ed-damas-noots"><path class="track" d="M694 392 L694 385"/></g>
+
+      <!-- Anwender: Smartphone buendig auf DC-Hoehe (212-368); Wallet auf Flussebene 258, Browser darunter -->
+      <rect x="24" y="212" width="172" height="156" rx="24" fill="#fbfaf6" stroke="#b3ae9f" stroke-width="2"/>
+      <text x="110" y="205" text-anchor="middle" font-size="11" font-weight="600" fill="#6f6e68" font-family="inherit">Smartphone</text>
+      <rect x="92" y="220" width="36" height="6" rx="3" fill="#cbc6b8"/>
+      <g class="bnode" id="nd-wallet">
+        <rect class="card" x="36" y="234" width="148" height="48" rx="14"/>
+        <circle class="halo" cx="64" cy="258" r="16"/><circle class="med" cx="64" cy="258" r="16"/>
+        <svg class="ico" x="56" y="250" width="17" height="17"><use href="#tb-wallet"/></svg>
+        <text class="nt" x="90" y="263" text-anchor="start" font-size="13">EUDI-Wallet</text>
+      </g>
+      <g class="bnode" id="nd-browser">
+        <rect class="card" x="36" y="296" width="148" height="48" rx="14"/>
+        <circle class="halo" cx="64" cy="320" r="16"/><circle class="med" cx="64" cy="320" r="16"/>
+        <svg class="ico" x="56" y="312" width="17" height="17"><use href="#tb-world"/></svg>
+        <text class="nt" x="90" y="325" text-anchor="start" font-size="13">Browser</text>
+      </g>
+      <rect x="82" y="354" width="56" height="5" rx="2.5" fill="#cbc6b8"/>
+
+      <!-- Zentraler Issuer Dienst (DC) -->
+      <g class="bnode" id="nd-bva">
+        <rect class="card" x="277" y="212" width="150" height="156" rx="18"/>
+        <circle class="halo" cx="352" cy="258" r="26"/><circle class="med" cx="352" cy="258" r="26"/>
+        <svg class="ico" x="339" y="245" width="26" height="26"><use href="#tb-building-bank"/></svg>
+        <text class="nt" x="352" y="308" text-anchor="middle" font-size="10">Zentraler Issuer Dienst</text>
+        <text class="ns" x="352" y="323" text-anchor="middle" font-size="9">BVA</text>
+        <text class="role" x="352" y="340" text-anchor="middle">Data Consumer (DC)</text>
+      </g>
+
+      <!-- Fernsiegelung: externer (Q)TSP, am Aussteller angebunden -->
+      <g class="bnode damas" id="nd-fsig">
+        <rect class="card" x="240" y="393" width="224" height="27" rx="9"/>
+        <svg class="ico" x="252" y="400" width="14" height="14"><use href="#tb-signature"/></svg>
+        <text class="dmt" x="274" y="411">(Fern)Siegelung &#183; (Q)TSP</text>
+      </g>
+
+      <!-- NOOTS + Bausteine + externe Backbone-Dienste -->
+      <g class="bnode bnoots-frame" id="nd-noots">
+        <rect class="card" x="536" y="206" width="316" height="178" rx="20"/>
+        <circle class="halo" cx="694" cy="236" r="22"/><circle class="med" cx="694" cy="236" r="22"/>
+        <svg class="ico" x="683" y="225" width="22" height="22"><use href="#tb-arrows-exchange-2"/></svg>
+        <text class="nt" x="694" y="274" text-anchor="middle" font-size="15">NOOTS</text>
+        <text class="ns" x="694" y="289" text-anchor="middle" font-size="9">Transport &amp; Vermittlung</text>
+      </g>
+      <g class="chip" id="nd-iam">
+        <rect class="chipbg" x="548" y="300" width="92" height="70" rx="12"/>
+        <svg class="chi" x="586" y="308" width="16" height="16"><use href="#tb-lock"/></svg>
+        <text class="cht" x="594" y="341" text-anchor="middle">IAM</text>
+        <text class="cht2" x="594" y="354" text-anchor="middle">Authentifizierung</text>
+        <g class="chk"><circle cx="628" cy="313" r="7"/><path d="M625 313 l2 2 l4 -4"/></g>
+      </g>
+      <g class="chip" id="nd-nav">
+        <rect class="chipbg" x="648" y="300" width="92" height="70" rx="12"/>
+        <svg class="chi" x="686" y="306" width="16" height="16"><use href="#tb-map-pin"/></svg>
+        <text class="cht" x="694" y="335" text-anchor="middle">Registerdaten-</text>
+        <text class="cht" x="694" y="346" text-anchor="middle">navigation</text>
+        <text class="cht2" x="694" y="358" text-anchor="middle">findet die Stelle</text>
+        <g class="chk"><circle cx="728" cy="313" r="7"/><path d="M725 313 l2 2 l4 -4"/></g>
+      </g>
+      <g class="chip" id="nd-cockpit">
+        <rect class="chipbg" x="748" y="300" width="92" height="70" rx="12"/>
+        <svg class="chi" x="786" y="306" width="16" height="16"><use href="#tb-shield-check"/></svg>
+        <text class="cht" x="794" y="335" text-anchor="middle">Vermittlungs-</text>
+        <text class="cht" x="794" y="346" text-anchor="middle">stelle</text>
+        <text class="cht2" x="794" y="358" text-anchor="middle">prüft &amp; vermittelt</text>
+        <g class="chk"><circle cx="828" cy="313" r="7"/><path d="M825 313 l2 2 l4 -4"/></g>
+      </g>
+      <g class="bnode damas" id="nd-damas">
+        <rect class="card" x="560" y="393" width="268" height="27" rx="9"/>
+        <svg class="ico" x="572" y="400" width="14" height="14"><use href="#tb-database"/></svg>
+        <text class="dmt" x="594" y="411">DAMAS &#183; Stammdaten &amp; Berechtigungen</text>
+      </g>
+
+      <!-- Datenquellen: Hochschule (hier, aktiv) als vorderste Karte eines Registerstapels -->
+      <g id="reg-stack">
+        <g class="stackcard"><rect class="stkrect" x="956" y="167" width="132" height="181" rx="14"/><svg class="stkico" x="966" y="170" width="11" height="11"><use href="#tb-database"/></svg><text class="stkt" x="983" y="179">Fahrzeugregister (KBA)</text></g>
+        <g class="stackcard"><rect class="stkrect" x="952" y="182" width="140" height="166" rx="15"/><svg class="stkico" x="962" y="185" width="11" height="11"><use href="#tb-database"/></svg><text class="stkt" x="979" y="194">Steuerregister</text></g>
+        <g class="stackcard"><rect class="stkrect" x="948" y="197" width="148" height="151" rx="16"/><svg class="stkico" x="958" y="200" width="11" height="11"><use href="#tb-database"/></svg><text class="stkt" x="975" y="209">Melderegister</text></g>
+      </g>
+      <g class="bnode" id="nd-dp">
+        <rect class="card" x="946" y="212" width="150" height="136" rx="18"/>
+        <circle class="halo" cx="1021" cy="258" r="26"/><circle class="med" cx="1021" cy="258" r="26"/>
+        <svg class="ico" x="1008" y="245" width="26" height="26"><use href="#tb-school"/></svg>
+        <text class="nt" x="1021" y="306" text-anchor="middle" font-size="12.5">Hochschule</text>
+        <text class="ns" x="1021" y="321" text-anchor="middle" font-size="9.5">authentische Quelle</text>
+        <text class="role" x="1021" y="338" text-anchor="middle">Data Provider (DP)</text>
+      </g>
+
+      <!-- Gesicherte Uebergaenge: zwei grosse Schloesser, je zentriert (ZID/DC<->NOOTS und NOOTS<->DP) -->
+      <g pointer-events="none">
+        <circle cx="481" cy="258" r="21" fill="#fff" stroke="#185FA5" stroke-width="2.5"/>
+        <svg x="467" y="244" width="28" height="28" fill="none" stroke="#185FA5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#tb-lock"/></svg>
+      </g>
+      <g pointer-events="none">
+        <circle cx="899" cy="258" r="21" fill="#fff" stroke="#185FA5" stroke-width="2.5"/>
+        <svg x="885" y="244" width="28" height="28" fill="none" stroke="#185FA5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#tb-lock"/></svg>
+      </g>
+      <!-- Beschriftung der Schloesser -->
+      <g pointer-events="none" text-anchor="middle" font-size="9" font-weight="600" fill="#185FA5" style="paint-order:stroke;stroke:#fff;stroke-width:3px;stroke-linejoin:round">
+        <text x="481" y="295">Sicherer</text>
+        <text x="481" y="306">Anschlussknoten</text>
+        <text x="899" y="295">Sicherer</text>
+        <text x="899" y="306">Anschlussknoten</text>
+      </g>
+
+      <g id="blabels">
+        <text class="elbl" id="lbl-browser-bva" x="202" y="282" text-anchor="start"></text>
+        <text class="elbl" id="lbl-wallet-bva" x="202" y="250" text-anchor="start"></text>
+      </g>
+
+      <path id="plpath" d="" fill="none" stroke="none" pointer-events="none"/>
+      <g id="restbadge" class="restbadge" pointer-events="none" style="opacity:0">
+        <rect class="rbg" x="20" y="378" width="186" height="33" rx="12"/>
+        <svg class="rbico" id="rbico" x="33" y="386" width="18" height="18"><use id="rbuse" href="#tb-lock"/></svg>
+        <text class="rbtxt" id="rbtxt" x="58" y="399"></text>
+      </g>
+      <g id="payload" class="payload" pointer-events="none" style="opacity:0">
+        <rect class="plbg" id="plbg" x="-50" y="-17" width="100" height="34" rx="10"/>
+        <svg class="plico" id="plico" x="-39" y="-11" width="22" height="22"><use id="pluse" href="#tb-id"/></svg>
+        <text class="pltxt" id="pltxt" x="-13" y="4" text-anchor="start"></text>
+      </g>
+    </svg>
+  </div>
+</section>
+
+<footer>Darstellung dient ausschließlich der Veranschaulichung zur Konzeption mit Beispieldaten; die gezeigten Visualisierungen sind nachgestellt. Die tatsächliche Umsetzung in 2027 wird grafisch abweichen. Die IT-Architektur zeigt das Zielbild der NOOTS-Integration.</footer>
+
+</div>
+<script>
+(function(){
+  var steps=[
+    {scene:"sc1",btn:"b1",ctx:0,label:"Nachweis auswählen",desc:"Sie wählen die Immatrikulationsbescheinigung. Andere Nachweise sind ausgegraut.",hint:"Klicken Sie auf „Weiter“.",
+     what:"Auf der <span class='tip' tabindex='0' role='button' aria-label='Erklärung: Seite des Zentralen Issuer Diensts'>Seite des Zentralen Issuer Diensts<span class='tipbox'>Aktuell läuft die Ausstellung über diese Website. Perspektivisch sollen Nachweise auch direkt aus der Wallet heraus beantragt werden können.</span></span> wählen Sie, welchen digitalen Nachweis Sie in Ihre EUDI-Wallet laden möchten. Die EUDI-Wallet ist die digitale Brieftasche auf Ihrem Smartphone, in der Sie Nachweise sicher aufbewahren und vorzeigen. In diesem Beispiel ist es ein Hochschulnachweis – die Immatrikulationsbescheinigung. Sie belegt, dass Sie an einer Hochschule eingeschrieben sind. Genauso möglich wären ein Führungszeugnis, eine Meldebescheinigung, ein digitaler Führerschein oder ein anderer amtlicher Nachweis."},
+    {scene:"sc2",btn:"b2",ctx:0,label:"Hochschule angeben",desc:"Wählen Sie Ihre Hochschule aus der Liste. Der Klick leitet zum Zentralen Issuer Dienst weiter.",hint:"Wählen Sie Ihre Hochschule und klicken Sie auf „Weiter“.",
+     what:"Für manche Nachweise braucht es vor der Ausstellung noch eine zusätzliche Angabe. Hier ist das Ihre Hochschule – bei anderen Nachweisen könnte stattdessen etwas anderes gefragt sein, zum Beispiel Ihre <span class='tip' tabindex='0' role='button' aria-label='Erklärung: Matrikelnummer'>Matrikelnummer<span class='tipbox'>Die persönliche Kennnummer, unter der Sie an Ihrer Hochschule geführt werden – eindeutig je Studierendem und Hochschule (steht z. B. auf dem Studierendenausweis).</span></span>."},
+    {scene:"sc2b",btn:"b2b",ctx:0,label:"Mit PID identifizieren",desc:"Seite des Zentralen Issuer Diensts. Ein Klick startet die Identifizierung und öffnet die Wallet.",hint:"Klicken Sie auf „Mit PID identifizieren“.",
+     what:"Auf der Seite des Zentralen Issuer Diensts werden Sie gebeten, sich auszuweisen. Dafür nutzen Sie Ihre <span class='tip' tabindex='0' role='button' aria-label='Erklärung: PID'>PID<span class='tipbox'>PID steht für Person Identification Data. Das ist die wallet-basierte Basisidentität (Name, Geburtsdatum …). Sie leitet sich aus der eID des Personalausweises ab, der elektronischen Identität zur sicheren Identifizierung im Internet.</span></span> – das sind Ihre digitalen Ausweisdaten, die beim Einrichten der Wallet sicher aus Ihrem Personalausweis übernommen wurden. Ein Klick startet den Ausweis-Vorgang und öffnet Ihre Wallet."},
+    {scene:"sc3",btn:"b3",ctx:1,label:"PID-Daten freigeben",desc:"Die Wallet zeigt "+window.CFG.ISSUER+" als verifizierte Stelle, die angefragten Attribute und den Zweck.",hint:"Klicken Sie auf „Freigeben“.",
+     what:"Für die Identifizierung werden nur einzelne Angaben aus Ihrem digitalen Ausweis benötigt – hier Name, Vorname und Geburtsdatum. Ihre Wallet zeigt Ihnen klar, wer welche Daten zu welchem Zweck erhält, bevor Sie sie freigeben."},
+    {scene:"sc4",pin:true,ctx:1,label:"Mit Wallet-PIN bestätigen",desc:"Mit der PIN bestätigen Sie die Freigabe – erst dann werden die Daten gesendet.",hint:"Geben Sie sechs beliebige Ziffern ein.",
+     what:"Mit Ihrer Wallet-PIN – der persönlichen Geheimzahl für Ihre Wallet – bestätigen Sie die Freigabe für genau diesen Zweck; erst danach werden die Daten gesendet."},
+    {scene:"sc5",btn:"b5",ctx:0,label:"Zurück im Browser",desc:"Zurück beim Zentralen Issuer Dienst: Identifizierung bestätigt. Ein Klick stößt die Ausstellung an.",hint:"Klicken Sie auf „Nachweis zur Wallet hinzufügen“.",
+     what:"Sie kehren von der EUDI-Wallet automatisch auf die Seite des Zentralen Issuer Diensts zurück."},
+    {scene:"sc6",btn:"b6",ctx:1,label:"Nachweis annehmen",desc:"Die Wallet zeigt den ausgestellten Nachweis von "+window.CFG.ISSUER+" mit Gültigkeit.",hint:"Klicken Sie auf „Annehmen“.",
+     what:"Ihre Wallet zeigt Ihnen den fertigen Nachweis mit der ausstellenden Stelle und der Gültigkeitsdauer – also bis wann er gilt. Sie entscheiden selbst, ob Sie ihn in die Wallet übernehmen oder verwerfen. Wie bei einem analogen, ausgedruckten Ausweis können Sie ihn aufbewahren oder jederzeit wieder aus der Brieftasche entfernen."},
+    {scene:"sc7",ctx:1,label:"Fertig: Ausstellung abgeschlossen",desc:"Der Nachweis liegt jetzt in Ihrer Wallet und kann vorgezeigt werden.",hint:"Geschafft – über „Von vorn“ starten Sie erneut.",
+     what:"Ihre Immatrikulationsbescheinigung liegt nun dauerhaft in Ihrer Wallet – neben Ihrem digitalen Ausweis. Sie können sie jederzeit vorzeigen, wann immer Sie belegen müssen, dass Sie eingeschrieben sind, und geben dabei nur die jeweils nötigen Angaben preis."}
+  ];
+
+  /* ===== Backend-Architektur je Schritt ===== */
+  var backend=[
+    /* 1 Nachweis auswählen */
+    {nodes:["browser","bva"],
+     edges:[{id:"browser-bva",dir:"bwd",label:"liefert verfügbare\nNachweistypen"}],
+     note:"Wenn Sie die Website des <span class='tip' tabindex='0' role='button' aria-label='Erklärung: Zentraler Issuer Dienst'>Zentralen Issuer Diensts (ZID)<span class='tipbox'>Zentraler Issuer Dienst – der zentrale Baustein für die Kommunikation mit der Wallet. Trotz des Namens „Issuer“ tritt er je nach Situation als Issuer oder als Verifier auf: Als Issuer stellt er Nachweise in die Wallet aus, als Verifier fragt er Daten aus der Wallet ab und prüft sie. Wie bei einem Supermarkt-Mitarbeiter, der morgens die Ware annimmt und prüft (Verifier) und sie später verkauft (Issuer).</span></span> im Browser öffnen und dort einen Nachweistyp auswählen (zum Beispiel die Immatrikulationsbescheinigung), werden noch keine persönlichen Daten übermittelt und keine Register abgefragt. Die einzigen Daten, die zu diesem Zeitpunkt fließen, kommen vom ZID auf Ihr Smartphone: die Liste der Nachweise, die Sie auswählen können – etwa Immatrikulationsbescheinigung, Führungszeugnis oder Meldebescheinigung."},
+    /* 2 Hochschule angeben */
+    {nodes:["browser","bva"],
+     edges:[{id:"browser-bva",dir:"fwd",label:"Zusätzliche Attribute\nübermitteln"}],
+     note:"Weitere Angaben sind sogenannte <span class='tip' tabindex='0' role='button' aria-label='Erklärung: Attribute'>Attribute<span class='tipbox'>Fachlich relevante Zusatzangaben.</span></span>. Diese Angaben helfen später dabei, im richtigen Register den richtigen Datensatz zu finden."},
+    /* 3 Mit PID identifizieren */
+    {nodes:["wallet","bva"],
+     edges:[{id:"wallet-bva",dir:"bwd",label:"Abfrage der PID"}],
+     rest:{ico:"tb-device-mobile",label:"Wallet öffnet sich lokal"},
+     note:"Jetzt folgt der Identitätsnachweis – vergleichbar mit einem sicheren Login. Daraufhin öffnet sich die Wallet-App auf dem Gerät des Anwenders. Der <span class='tip' tabindex='0' role='button' aria-label='Erklärung: Zentraler Issuer Dienst als Verifier'>Zentrale Issuer Dienst<span class='tipbox'>Der Zentrale Issuer Dienst tritt an dieser Stelle als Verifier (Relying Party) auf – also als Stelle, die Daten aus der Wallet anfragt und prüft – und fragt ausschließlich Daten ab.</span></span> fragt dort gezielt bestimmte Identitätsangaben an. Das funktioniert über ein standardisiertes Protokoll (<span class='tip' tabindex='0' role='button' aria-label='Erklärung: OpenID4VP'>OpenID4VP<span class='tipbox'>OpenID for Verifiable Presentations – Protokoll, mit dem die Wallet Daten an einen Verifier vorlegt.</span></span>), das den sicheren Datenaustausch zwischen Wallet und Dienst regelt. Die Wallet prüft automatisch, ob der anfragende Dienst berechtigt ist, diese Daten abzufragen – nur registrierte Stellen mit nachgewiesenem berechtigtem Interesse dürfen überhaupt anfragen."},
+    /* 4 PID-Daten freigeben */
+    {nodes:["wallet"],
+     edges:[],rest:{ico:"tb-lock",label:"Freigabe – lokal"},
+     note:"Noch wurden keine Daten von Ihrem Smartphone übermittelt. Bis zur Bestätigung im nächsten Schritt verlässt keine dieser Angaben das Gerät. Grundsätzlich können hier auch einzelne Angaben oder sogar nur eine Bedingung abgefragt werden – zum Beispiel nur „volljährig: ja/nein“ statt des vollständigen Geburtsdatums. Dieses Prinzip heißt selektive Offenlegung: Es werden immer nur so viele Daten weitergegeben wie nötig."},
+    /* 5 Mit Wallet-PIN bestätigen – PID-Übermittlung */
+    {nodes:["wallet","bva"],
+     edges:[{id:"wallet-bva",dir:"fwd",label:"PID übermitteln"}],
+     flow:{legs:[{d:"M138 258 L231 258",ico:"tb-id",label:"PID",dur:2100}]},
+     note:"Erst wenn Sie Ihre Wallet-PIN eingeben, werden die freigegebenen Daten tatsächlich versendet. Die Wallet schickt ausschließlich die <span class='tip' tabindex='0' role='button' aria-label='Erklärung: ausgewählte Daten'>ausgewählten Daten<span class='tipbox'>Die zuvor freigegebenen Attribute werden als Präsentation per OpenID4VP an den Zentralen Issuer Dienst (Verifier) gesendet.</span></span> an den Zentralen Issuer Dienst – versehen mit einer digitalen Signatur, die belegt, dass die Daten aus genau dieser Wallet auf genau diesem Gerät stammen. Der Zentrale Issuer Dienst prüft daraufhin zwei Dinge unabhängig voneinander: erstens die Echtheit und Herkunft der <span class='tip' tabindex='0' role='button' aria-label='Erklärung: Identitätsdaten'>Identitätsdaten<span class='tipbox'>Geprüft wird das Siegel des PID-Providers über den Attributen – also Echtheit und Herkunft – gemäß eIDAS-Vorgaben gegen die offiziellen Trusted Lists (samt Gültigkeit bzw. möglichem Widerruf).</span></span> (geprüft anhand offizieller europäischer <span class='tip' tabindex='0' role='button' aria-label='Erklärung: Vertrauenslisten'>Vertrauenslisten<span class='tipbox'>Offizielle Listen, über die Aussteller, Wallets und Verifier EU-weit als vertrauenswürdig erkennbar sind (Trusted Lists).</span></span>), zweitens die <span class='tip' tabindex='0' role='button' aria-label='Erklärung: Bindung an Gerät und Nutzer'>Bindung<span class='tipbox'>Geprüft wird die Signatur der Wallet – sie belegt, dass die Daten an genau dieses Gerät und diesen Nutzer gebunden sind und nicht auf einem anderen Gerät verwendet werden können.</span></span> an das konkrete Gerät und den Nutzer. Dies stellt sicher, dass die Identifizierung via PID das gesetzlich höchste Vertrauensniveau „hoch“ erreicht – vergleichbar dem Vorzeigen des Personalausweises. Der vollständige Ausweis wird dabei nie übertragen, sondern immer nur die freigegebenen Daten."},
+    /* 6 Zurück im Browser – NOOTS-Abruf */
+    {nodes:["bva","noots","dp","damas"],
+     edges:[{id:"damas-noots",dir:"fwd",label:""}],
+     flow:{legs:[{d:"M231 258 L694 258",ico:"tb-id",label:"PID",dur:2000},{d:"M694 258 L992 258",ico:"tb-id",label:"PID",dur:1300,gate:true},{d:"M992 258 L383 258",ico:"tb-file-text",label:"Nachweisdaten",dur:2600,flip:true}],final:{ico:"tb-certificate",label:"Nachweis",flashFsig:true},seq:[{id:"iam",on:120,check:560},{id:"nav",on:760,check:1200},{id:"cockpit",on:1400,check:1850}],gateDur:2150},
+     note:"Mit den verifizierten Identitätsdaten und den Zusatzangaben aus Schritt 2 startet der Zentrale Issuer Dienst den eigentlichen Abruf. Dabei kommt das NOOTS ins Spiel – ein System, das registerübergreifend den richtigen Datensatz aufspürt und den Abruf koordiniert. Es läuft dabei durch mehrere Stationen: Zuerst wird die Anfrage <span class='tip' tabindex='0' role='button' aria-label='Erklärung: IAM – Authentifizierung'>authentifiziert<span class='tipbox'>Diese Authentifizierung übernimmt das Identity- und Access-Management (IAM) für Behörden: Es authentifiziert die teilnehmenden Komponenten und Stellen und stellt die Zugriffstoken aus.</span></span>, dann wird ermittelt, <span class='tip' tabindex='0' role='button' aria-label='Erklärung: Registerdatennavigation'>welche Stelle den gewünschten Nachweis führt<span class='tipbox'>Diesen Schritt übernimmt die Registerdatennavigation: Sie findet die zuständige registerführende Stelle.</span></span>, und schließlich wird <span class='tip' tabindex='0' role='button' aria-label='Erklärung: Vermittlungsstelle – Berechtigungsprüfung'>geprüft<span class='tipbox'>Diese Prüfung übernimmt die Vermittlungsstelle: Sie führt eine abstrakte Berechtigungsprüfung durch – ohne personenbezogene Daten zu sehen.</span></span>, ob der Abruf zulässig ist – alles ohne dass an dieser Stelle personenbezogene Daten unnötig weitergegeben werden (abstrakte Berechtigungsprüfung). Welche Register überhaupt existieren und wo welche Daten liegen, ist in einer zentralen Verwaltungsübersicht (DAMAS) hinterlegt. Erst wenn alle Berechtigungen stimmen, wird die Anfrage an die zuständige Stelle weitergeleitet, in diesem Fall an Ihre Hochschule. Diese sucht anhand der Identitätsdaten und der Zusatzangaben aus Schritt 2 den konkreten Nachweis, prüft nochmals eigenständig die Berechtigung und sendet die Daten zurück. Der ZID wandelt diese Daten dann in einen standardisierten, kryptografisch gesicherten <span class='tip' tabindex='0' role='button' aria-label='Erklärung: Nachweis'>Nachweis<span class='tipbox'>International als Verifiable Credential bekannt.</span></span> um. Der <span class='tip' tabindex='0' role='button' aria-label='Erklärung: Sicherer Anschlussknoten'>Sichere Anschlussknoten (SAK)<span class='tipbox'>Sicherer Anschlussknoten (SAK) – abgesicherter technischer Zugangspunkt, über den Data Consumer und Data Provider an das NOOTS angebunden werden.</span></span> ermöglicht den <span class='tip' tabindex='0' role='button' aria-label='Erklärung: Data Consumer'>Data Consumern<span class='tipbox'>Data Consumer (DC) – die Stelle, die Daten abruft. In diesem Beispiel der Zentrale Issuer Dienst.</span></span> und <span class='tip' tabindex='0' role='button' aria-label='Erklärung: Data Provider'>Data Providern<span class='tipbox'>Data Provider (DP) – die Stelle, die die angefragten Daten bereitstellt (die registerführende Stelle). In diesem Beispiel die Hochschule.</span></span> einen einfachen und gleichzeitig sicheren Anschluss an das NOOTS-Ökosystem. Die Daten zwischen den SAKs werden auf Transportebene mit TLS 1.3 gemäß BSI-Vorgaben aus der BSI TR-03190 verschlüsselt."},
+    /* 7 Nachweis annehmen – steht auf der Strecke */
+    {nodes:["bva","wallet"],
+     edges:[],
+     flow:{legs:[{d:"M322 258 L230 258",ico:"tb-certificate",label:"Nachweis",dur:1700}]},
+     note:"Der fertige Nachweis wird an die Wallet übermittelt und dort zur Übernahme angeboten – er ist bereit und kann dann dort angenommen (gespeichert) werden. Der Nachweis wurde dabei mit einer digitalen <span class='tip' tabindex='0' role='button' aria-label='Erklärung: Signatur'>Signatur<span class='tipbox'>Eine digitale Signatur ist das digitale Gegenstück zu Stempel oder Unterschrift: eine kryptografisch gesicherte Unterschrift des Ausstellers. Sie belegt Echtheit und Herkunft des Nachweises und zeigt, dass er nachträglich nicht verändert wurde.</span></span> versehen, die seine Echtheit und Herkunft belegt. Die Signaturen entsprechen den BSI-Sicherheitsrichtlinien und sind nach heutigem Stand der Technik praktisch nicht fälschbar."},
+    /* 8 Fertig – Nachweis kommt in die Wallet */
+    {nodes:["wallet"],
+     edges:[],
+     flow:{legs:[{d:"M230 258 L140 258",ico:"tb-certificate",label:"Nachweis",dur:1700}]},
+     rest:{ico:"tb-circle-check",label:"Sicher in der Wallet"},
+     note:"Der Nachweis ist jetzt lokal und kryptografisch verschlüsselt auf dem Gerät gespeichert. Für die Aufbewahrung ist keine dauerhafte Verbindung zum Aussteller, in diesem Fall zur Hochschule, erforderlich. Auch wenn der Nachweis später bei einem anderen Dienst vorgezeigt wird, etwa bei der Krankenversicherung oder bei der Beantragung von BAföG, braucht es keine erneute Verbindung zum Aussteller – der <span class='tip' tabindex='0' role='button' aria-label='Erklärung: Verifier'>Verifier<span class='tipbox'>Der Verifier ist hier der jeweilige empfangende Dienst – also die Behörde oder Firma, der der Nachweis vorgezeigt wird (etwa die Krankenversicherung oder die BAföG-Stelle). Diese Stelle prüft die Echtheit eigenständig – nicht der ZID des BVA.</span></span> kann die Echtheit dank der digitalen Siegelung selbstständig prüfen. Dabei legt die Wallet erneut nur die konkret benötigten Angaben offen."}
+  ];
+  var BNODES=["browser","wallet","bva","fsig","noots","iam","nav","cockpit","dp","damas"];
+  var BEDGES=["browser-bva","wallet-bva","bva-fsig","bva-noots","noots-dp","damas-noots"];
+  var cur=0,pin=0,N=steps.length;
+  var $=function(id){return document.getElementById(id);};
+
+  /* Konfiguration anwenden */
+  document.querySelectorAll(".cfg-url").forEach(function(e){e.textContent=window.CFG.PORTAL_URL;});
+  document.querySelectorAll(".cfg-url2").forEach(function(e){e.textContent=window.CFG.ISSUANCE_URL;});
+  document.querySelectorAll(".cfg-issuer").forEach(function(e){e.textContent=window.CFG.ISSUER;});
+  var hsSel=$("hssel");
+  function applyHs(){document.querySelectorAll(".cfg-hs").forEach(function(e){e.textContent=hsSel.value;});}
+  hsSel.onchange=applyHs;
+  applyHs();
+  var ctxEl=$("fctx"),stepEl=$("fstep"),descEl=$("fdesc"),hintEl=$("fhint"),list=$("flist");
+  var dots=Array.prototype.slice.call($("pdots").children);
+
+  steps.forEach(function(s,i){
+    var r=document.createElement("div");r.className="srow";r.id="fr"+i;
+    r.innerHTML='<span class="snum">'+(i+1)+'</span><span>'+s.label+'</span>';
+    r.onclick=function(){goTo(i);};
+    list.appendChild(r);
+  });
+
+  function setPin(n){pin=Math.max(0,Math.min(6,n));dots.forEach(function(d,i){d.classList.toggle("fill",i<pin);});}
+
+  var PLREDUCED=!!(window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+  var plRAF=0, plTimers=[];
+  function plClearTimers(){ for(var i=0;i<plTimers.length;i++)clearTimeout(plTimers[i]); plTimers=[]; if(plRAF){cancelAnimationFrame(plRAF);plRAF=0;} }
+  function plT(fn,ms){ var id=setTimeout(fn,ms); plTimers.push(id); return id; }
+  function chipReset(){ ["iam","nav","cockpit"].forEach(function(id){ var c=$("nd-"+id); if(c)c.classList.remove("on","done"); }); }
+  function fsigOff(){ var n=$("nd-fsig"); if(n)n.classList.remove("on"); var e=$("ed-bva-fsig"); if(e){ e.classList.remove("on","fwd","bwd"); var t=e.querySelector(".track"); if(t){t.removeAttribute("marker-end");t.removeAttribute("marker-start");} } }
+  function fsigFlash(){ var n=$("nd-fsig"); if(n)n.classList.add("on"); var e=$("ed-bva-fsig"); if(e){ e.classList.add("on","fwd"); var t=e.querySelector(".track"); if(t)t.setAttribute("marker-end","url(#flowarrow)"); } plT(fsigOff,1400); }
+  function plHide(){ plClearTimers(); var p=$("payload"); if(p)p.style.opacity="0"; chipReset(); fsigOff(); }
+  function plSetGlyph(ico,label){
+    var u=$("pluse"); if(u)u.setAttribute("href","#"+ico);
+    var t=$("pltxt"); if(t)t.textContent=label;
+    var w=Math.max(72,44+(label?label.length:0)*7);
+    var bg=$("plbg"); if(bg){bg.setAttribute("x",-w/2);bg.setAttribute("width",w);}
+    var ic=$("plico"); if(ic)ic.setAttribute("x",-w/2+11);
+    if(t)t.setAttribute("x",-w/2+37);
+  }
+  function plAt(p,x,y,sx){ p.setAttribute("transform","translate("+x+","+y+")"+(sx!=null?" scale("+sx+",1)":"")); }
+  function plPlay(cfg){
+    plHide();
+    if(!cfg||!cfg.legs||!cfg.legs.length)return;
+    var legs=cfg.legs, p=$("payload"), pp=$("plpath"); if(!p||!pp)return;
+    p.style.opacity="1";
+    function runSeq(){ if(!cfg.seq)return; cfg.seq.forEach(function(stp){ plT(function(){var c=$("nd-"+stp.id); if(c)c.classList.add("on");}, stp.on); plT(function(){var c=$("nd-"+stp.id); if(c)c.classList.add("done");}, stp.check); }); }
+    if(PLREDUCED){
+      var fg=cfg.final||legs[legs.length-1];
+      plSetGlyph(fg.ico,fg.label);
+      pp.setAttribute("d",legs[legs.length-1].d); var L=pp.getTotalLength(),pt=pp.getPointAtLength(L);
+      plAt(p,pt.x,pt.y,null);
+      cfg.seq&&cfg.seq.forEach(function(stp){var c=$("nd-"+stp.id);if(c)c.classList.add("on","done");});
+      return;
+    }
+    var li=0, lastPt=null;
+    function flip(g,pt,after){
+      var dur=560,t0=0,sw=false;
+      function fr(ts){ if(!t0)t0=ts; var k=Math.min(1,(ts-t0)/dur); var sx=Math.abs(1-2*k);
+        if(k>=0.5&&!sw){ plSetGlyph(g.ico,g.label); sw=true; }
+        plAt(p,pt.x,pt.y,sx);
+        if(k<1)plRAF=requestAnimationFrame(fr); else { plAt(p,pt.x,pt.y,null); if(after)after(); } }
+      plRAF=requestAnimationFrame(fr);
+    }
+    function animateLeg(){
+      var lg=legs[li];
+      pp.setAttribute("d",lg.d);
+      var L=pp.getTotalLength(),s0=pp.getPointAtLength(0); plAt(p,s0.x,s0.y,null);
+      var t0=0;
+      function fr(ts){ if(!t0)t0=ts; var k=Math.min(1,(ts-t0)/(lg.dur||1800)); var e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2; var pt=pp.getPointAtLength(e*L); plAt(p,pt.x,pt.y,null);
+        if(k<1)plRAF=requestAnimationFrame(fr); else { lastPt=pp.getPointAtLength(L); afterLeg(); } }
+      plRAF=requestAnimationFrame(fr);
+    }
+    function startLeg(){ if(li===0)plSetGlyph(legs[0].ico,legs[0].label); animateLeg(); }
+    function afterLeg(){
+      if(li<legs.length-1){
+        li++; var lg=legs[li];
+        if(lg.flip){ plT(function(){ flip({ico:lg.ico,label:lg.label}, lastPt, startLeg); },200); }
+        else if(lg.gate){ runSeq(); plT(startLeg, cfg.gateDur||2000); }
+        else startLeg();
+      } else if(cfg.final){
+        plT(function(){ flip({ico:cfg.final.ico,label:cfg.final.label}, lastPt, function(){ if(cfg.final.flashFsig)fsigFlash(); }); },200);
+      }
+    }
+    startLeg();
+  }
+  function setRest(rest){ var rb=$("restbadge"); if(!rb)return; if(rest){ var u=$("rbuse"); if(u)u.setAttribute("href","#"+(rest.ico||"tb-circle-check")); var t=$("rbtxt"); if(t)t.textContent=rest.label||""; rb.style.opacity="1"; } else rb.style.opacity="0"; }
+  function renderBackend(){
+    var b=backend[cur]||{nodes:[],edges:[],note:""};
+    BNODES.forEach(function(id){
+      var el=$("nd-"+id);
+      if(el)el.classList.toggle("on",b.nodes.indexOf(id)>=0);
+    });
+    BEDGES.forEach(function(id){
+      var g=$("ed-"+id);
+      if(!g)return;
+      var cfg=null;
+      for(var k=0;k<b.edges.length;k++){if(b.edges[k].id===id){cfg=b.edges[k];break;}}
+      g.classList.remove("on","fwd","bwd","bi");
+      var lbl=$("lbl-"+id),tr=g.querySelector(".track");
+      if(cfg){
+        g.classList.add("on");g.classList.add(cfg.dir||"fwd");
+        if(lbl){lbl.textContent="";var _ls=(cfg.label||"").split("\n"),_x=lbl.getAttribute("x");for(var _li=0;_li<_ls.length;_li++){var _ts=document.createElementNS("http://www.w3.org/2000/svg","tspan");_ts.setAttribute("x",_x);_ts.setAttribute("dy",_li?"1.15em":"0");_ts.textContent=_ls[_li];lbl.appendChild(_ts);}lbl.classList.add("show");}
+        if(tr){
+          if(cfg.dir==="bwd"){tr.setAttribute("marker-start","url(#flowarrow)");tr.removeAttribute("marker-end");}
+          else{tr.setAttribute("marker-end","url(#flowarrow)");tr.removeAttribute("marker-start");}
+        }
+      }else{
+        if(lbl){lbl.textContent="";lbl.classList.remove("show");}
+        if(tr){tr.removeAttribute("marker-start");tr.removeAttribute("marker-end");}
+      }
+    });
+    var dg=document.querySelector(".bdiagram"); if(dg)dg.classList.toggle("haspl",!!b.flow);
+    if(b.flow){plPlay(b.flow);}else{plHide();}
+    setRest(b.rest);
+    var bn=$("bknote");if(bn)bn.innerHTML=b.note||"";
+  }
+
+  function render(){
+    for(var i=0;i<N;i++){
+      $(steps[i].scene).classList.toggle("act",i===cur);
+      var row=$("fr"+i);
+      row.classList.toggle("on",i===cur);
+      row.classList.toggle("done",i<cur);
+    }
+    var s=steps[cur], w=s.ctx===1;
+    ctxEl.innerHTML=w
+      ? '<svg class="tic" width="14" height="14" style="color:#0C447C"><use href="#tb-shield-check"/></svg> In der Wallet (App)'
+      : '<svg class="tic" width="14" height="14"><use href="#tb-world"/></svg> Im Browser (Webseite)';
+    ctxEl.classList.toggle("w",w);
+    stepEl.textContent="Schritt "+(cur+1)+"/"+N;
+    descEl.textContent=s.desc;
+    hintEl.textContent=s.hint;
+    renderBackend();
+    var exp=$("fexp");
+    exp.classList.add("fade");
+    setTimeout(function(){
+      $("ebadge").textContent="Was der Nutzer am Smartphone sieht";
+      $("etitle").textContent=s.label;
+      $("ewhat").innerHTML=s.what;
+      exp.classList.remove("fade");
+    },180);
+  }
+
+  function goTo(i){
+    cur=Math.max(0,Math.min(N-1,i));
+    if(steps[cur].pin){setPin(0);var pe=$("pinentry"),po=$("pinok");if(pe)pe.style.display="flex";if(po)po.style.display="none";}
+    render();
+  }
+
+  $("fnext").onclick=function(){goTo(cur+1);};
+  $("fprev").onclick=function(){goTo(cur-1);};
+  $("frst").onclick=function(){setPin(0);goTo(0);};
+
+  steps.forEach(function(s){
+    if(!s.btn)return;
+    var b=$(s.btn);
+    if(b)b.onclick=function(){setTimeout(function(){goTo(cur+1);},180);};
+  });
+
+  var pinStep=-1; steps.forEach(function(s,i){if(s.pin)pinStep=i;});
+  Array.prototype.forEach.call($("pkeys").children,function(k){
+    k.onclick=function(){
+      if(cur!==pinStep)return;
+      var kind=k.getAttribute("data-k");
+      if(kind==="bs"){setPin(pin-1);return;}
+      if(kind==="fp"){setPin(6);}
+      else setPin(pin+1);
+      if(pin>=6){var pe=$("pinentry"),po=$("pinok");if(pe)pe.style.display="none";if(po)po.style.display="flex";setTimeout(function(){goTo(pinStep+1);},1100);}
+    };
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
